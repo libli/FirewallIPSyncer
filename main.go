@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"time"
 
 	"FirewallIPSyncer/firewall"
 	"FirewallIPSyncer/log"
@@ -36,39 +35,14 @@ func main() {
 		log.Error.Fatalln(err)
 	}
 
-	var currentIP string
 	ip, err := GetPublicIP()
 	if err != nil {
 		log.Error.Fatalln(err)
 	}
 
 	log.Info.Println("Updating firewall rules on startup")
-	currentIP = ip
 	if err := firewall.UpdateFirewallRule(client, env.InstanceID, env.Tag, ip); err != nil {
 		log.Error.Println(err)
-	}
-
-	ticker := time.NewTicker(time.Minute * 5) // 每5分钟检查一次IP是否发生变化
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			log.Info.Println("Checking IP address")
-			ip, err := GetPublicIP()
-			if err != nil {
-				log.Error.Println(err)
-				continue
-			}
-
-			if ip != currentIP {
-				log.Info.Println("IP address has changed, updating firewall rules")
-				currentIP = ip
-				if err := firewall.UpdateFirewallRule(client, env.InstanceID, env.Tag, ip); err != nil {
-					log.Error.Println(err)
-				}
-			}
-		}
 	}
 }
 

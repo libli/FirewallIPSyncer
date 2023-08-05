@@ -94,3 +94,24 @@ stop() {
 
 启动：
 `/etc/init.d/FirewallIPSyncer start`
+
+## crontab 运行
+每天使用crontab运行一次，可以避免开启时要等待的问题。
+
+代码修改为执行完即退出。
+
+```bash
+$ vi ipsync.sh
+#!/bin/bash
+export SecretID=AKIDxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+export SecretKey=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+export Region=ap-guangzhou
+export InstanceID=lhins-xxxxxxxx
+export Tag='#Home'
+/usr/local/bin/FirewallIPSyncer
+```
+
+crontab -e
+```bash
+0 5 * * * /usr/local/bin/ipsync.sh >> /var/log/ipsync.log 2>&1
+```
