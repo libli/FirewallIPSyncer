@@ -49,3 +49,48 @@ docker run --name=ipsync -d --restart=unless-stopped \
   -e Tag='#home' \
   libli/ipsync:latest
 ```
+
+## ARM 软路由使用
+编译arm版本：
+`GOOS=linux GOARCH=arm64 go build`
+
+复制到软路由上`/usr/local/bin`
+
+编写自启动角本：
+vi /etc/init.d/FirewallIPSyncer
+
+```bash
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=15
+
+BIN=/usr/local/bin/FirewallIPSyncer
+
+start() {
+    if [ -x $BIN ]; then
+        echo "Sleeping 300 seconds before starting FirewallIPSyncer..."
+        sleep 300
+        echo "Starting FirewallIPSyncer..."
+        export SecretID=AKIDxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        export SecretKey=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        export Region=ap-guangzhou
+        export InstanceID=lhins-xxxxxxxx
+        export Tag='#Home'
+        $BIN >> /var/log/FirewallIPSyncer.log 2>&1 &
+    else
+        echo "FirewallIPSyncer binary not found..."
+    fi
+}
+
+stop() {
+    echo "Stopping FirewallIPSyncer..."
+    killall $(basename $BIN)
+}
+```
+
+添加权限：
+`chmod +x /etc/init.d/FirewallIPSyncer`
+
+启动：
+`/etc/init.d/FirewallIPSyncer start`
