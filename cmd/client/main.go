@@ -23,7 +23,7 @@ type EnvVars struct {
 	Tag string
 }
 
-//go:generate bash -c "GOOS=linux GOARCH=arm64 go build"
+//go:generate bash -c "GOOS=linux GOARCH=arm64 go build -o ./bin/client"
 func main() {
 	env, err := GetEnvVars()
 	if err != nil {
