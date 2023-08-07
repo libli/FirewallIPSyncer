@@ -40,7 +40,6 @@ func main() {
 		log.Error.Fatalln(err)
 	}
 
-	log.Info.Println("Updating firewall rules on startup")
 	if err := firewall.UpdateFirewallRule(client, env.InstanceID, env.Tag, ip); err != nil {
 		log.Error.Println(err)
 	}

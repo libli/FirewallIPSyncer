@@ -35,10 +35,16 @@ func UpdateFirewallRule(client *lighthouse.Client, instanceID, tag, ip string) e
 		return fmt.Errorf("UpdateFirewallRule: error getRuleByDescription for instance %s: %w", instanceID, err)
 	}
 
-	// 找到了这个 tag 的规则，就直接先删除，再执行下面的创建规则
+	// 找到了这个 tag 的规则，就判断是否需要修改。如果需要就先删除，再执行下面的创建规则
 	// 因为接口没有更新规则的方法，ModifyFirewallRules，这个会直接重置所有规则
 	if ruleInfo != nil {
-		log.Info.Println("UpdateFirewallRule: found rule, deleting rule")
+		// 找到这个 tag 的规则，判断是否需要更新
+		log.Info.Println("UpdateFirewallRule: found rule IP:", *ruleInfo.CidrBlock)
+		if *ruleInfo.CidrBlock == ip {
+			log.Info.Println("UpdateFirewallRule: no need to update")
+			return nil
+		}
+		log.Info.Println("UpdateFirewallRule: deleting rule")
 		rule := &lighthouse.FirewallRule{
 			Protocol:                ruleInfo.Protocol,
 			Port:                    ruleInfo.Port,
