@@ -73,6 +73,7 @@ func GetClientIP() (string, error) {
 	if sshClient, exist := os.LookupEnv("SSH_CLIENT"); exist {
 		sshClientSlice := strings.Split(sshClient, " ")
 		ip := strings.TrimSpace(sshClientSlice[0])
+		log.Info.Println("GetClientIP: client ip is", ip)
 		return ip, nil
 	}
 	return "", errors.New("env: SSH_CLIENT Not Exist")

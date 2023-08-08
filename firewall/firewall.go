@@ -30,35 +30,29 @@ func CreateClient(secretId string, secretKey string, region string, endpoint str
 // UpdateFirewallRule 更新防火墙规则
 func UpdateFirewallRule(client *lighthouse.Client, instanceID, tag, ip string) error {
 	log.Info.Println("UpdateFirewallRule: starting UpdateRules for instance", instanceID)
-	ruleInfo, err := getRuleByDescription(client, instanceID, tag)
+
+	rules, err := getRules(client, instanceID)
 	if err != nil {
-		return fmt.Errorf("UpdateFirewallRule: error getRuleByDescription for instance %s: %w", instanceID, err)
+		return fmt.Errorf("UpdateFirewallRule: error getting rules for instance %s: %w", instanceID, err)
 	}
 
-	// 找到了这个 tag 的规则，就判断是否需要修改。如果需要就先删除，再执行下面的创建规则
-	// 因为接口没有更新规则的方法，ModifyFirewallRules，这个会直接重置所有规则
+	ruleInfo, found := findRule(rules, ip, tag)
+	if found {
+		log.Info.Println("UpdateFirewallRule: no need to update")
+		return nil
+	}
+
 	if ruleInfo != nil {
-		// 找到这个 tag 的规则，判断是否需要更新
-		log.Info.Println("UpdateFirewallRule: found rule IP:", *ruleInfo.CidrBlock)
-		if *ruleInfo.CidrBlock == ip {
-			log.Info.Println("UpdateFirewallRule: no need to update")
-			return nil
-		}
+		// 删除与tag匹配但IP不匹配的规则
 		log.Info.Println("UpdateFirewallRule: deleting rule")
-		rule := &lighthouse.FirewallRule{
-			Protocol:                ruleInfo.Protocol,
-			Port:                    ruleInfo.Port,
-			CidrBlock:               ruleInfo.CidrBlock,
-			Action:                  ruleInfo.Action,
-			FirewallRuleDescription: ruleInfo.FirewallRuleDescription,
-		}
-		if err := deleteFirewallRule(client, instanceID, rule); err != nil {
+		if err := deleteFirewallRule(client, instanceID, convertToFirewallRule(ruleInfo)); err != nil {
 			return fmt.Errorf("UpdateFirewallRule: error deleteFirewallRule for instance %s: %w", instanceID, err)
 		}
 		log.Info.Println("UpdateFirewallRule: successfully deleted firewall rule")
 	} else {
 		log.Info.Println("UpdateFirewallRule: no rule found, creating new rule")
 	}
+
 	// 创建新规则
 	rule := &lighthouse.FirewallRule{
 		Protocol:                common.StringPtr("TCP"),
@@ -93,19 +87,30 @@ func getRules(client *lighthouse.Client, instanceID string) ([]*lighthouse.Firew
 	return response.Response.FirewallRuleSet, nil
 }
 
-// getRuleByDescription 根据 tag 获取防火墙规则
-func getRuleByDescription(client *lighthouse.Client, instanceID string, tag string) (*lighthouse.FirewallRuleInfo, error) {
-	log.Info.Printf("getRuleByDescription: searching for rule with description: %s in instance: %s", tag, instanceID)
-	rules, err := getRules(client, instanceID)
-	if err != nil {
-		return nil, fmt.Errorf("getRuleByDescription: error getting rules for instance %s: %w", instanceID, err)
-	}
+// findRule 查找防火墙规则
+func findRule(rules []*lighthouse.FirewallRuleInfo, ip, tag string) (*lighthouse.FirewallRuleInfo, bool) {
+	// 定义一个变量来存储找到的只匹配标签的规则
+	var tagMatchedRule *lighthouse.FirewallRuleInfo
+
+	// 遍历规则，寻找匹配的IP或标签
 	for _, rule := range rules {
+		if rule.CidrBlock != nil && *rule.CidrBlock == ip {
+			// 找到匹配的IP，返回规则和完全匹配的标志
+			return rule, true
+		}
 		if rule.FirewallRuleDescription != nil && *rule.FirewallRuleDescription == tag {
-			return rule, nil
+			// 找到匹配的标签但IP不匹配，存储规则
+			tagMatchedRule = rule
 		}
 	}
-	return nil, nil
+
+	// 如果找到了匹配标签的规则，返回存储的规则和非完全匹配的标志
+	if tagMatchedRule != nil {
+		return tagMatchedRule, false
+	}
+
+	// 未找到匹配的规则，返回nil和非完全匹配的标志
+	return nil, false
 }
 
 // createFirewallRule 创建防火墙规则
@@ -147,4 +152,19 @@ func deleteFirewallRule(client *lighthouse.Client, instanceID string, rule *ligh
 	log.Info.Printf("deleteFirewallRule: RequestId: %s", *response.Response.RequestId)
 
 	return nil
+}
+
+// convertToFirewallRule 将防火墙规则进行转换
+func convertToFirewallRule(ruleInfo *lighthouse.FirewallRuleInfo) *lighthouse.FirewallRule {
+	if ruleInfo == nil {
+		return nil
+	}
+
+	return &lighthouse.FirewallRule{
+		Protocol:                ruleInfo.Protocol,
+		Port:                    ruleInfo.Port,
+		CidrBlock:               ruleInfo.CidrBlock,
+		Action:                  ruleInfo.Action,
+		FirewallRuleDescription: ruleInfo.FirewallRuleDescription,
+	}
 }

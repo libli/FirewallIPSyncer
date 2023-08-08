@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 
 	"FirewallIPSyncer/firewall"
 	"FirewallIPSyncer/log"
@@ -77,11 +78,15 @@ func GetPublicIP() (string, error) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("GetPublicIP: unexpected status code: %d", resp.StatusCode)
+	}
+
 	ip, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("GetPublicIP: error read response: %w", err)
 	}
 
 	log.Info.Printf("GetPublicIP: got IP: %s", ip)
-	return string(ip), nil
+	return strings.TrimSpace(string(ip)), nil
 }
