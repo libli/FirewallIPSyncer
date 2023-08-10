@@ -56,7 +56,20 @@ http://myexternalip.com/raw
 编写shell角本：
 ```bash
 vi /usr/local/bin/run_ipsync.sh
+#!/bin/bash
+# 停止并删除现有容器，如果存在的话
+docker rm -f ipsync
 
+# 重新创建并运行容器
+docker run --name=ipsync -d \
+  -e SecretID=AKIDxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx \
+  -e SecretKey=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx \
+  -e InstanceID=lhins-xxxxxxxx \
+  -e Region=ap-guangzhou \
+  -e TYPE=server \
+  -e SSH_CLIENT="$SSH_CLIENT" \
+  -e Tag='#SSH' \
+  libli/ipsync:latest
 ```
 
 添加执行权限：`chmod +x /usr/local/bin/run_ipsync.sh`
