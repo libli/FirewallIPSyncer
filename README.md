@@ -53,22 +53,18 @@ http://myexternalip.com/raw
 
 以下是服务端运行：
 
+编写shell角本：
 ```bash
-docker run --name=ipsync -d \
-  -e SecretID=AKIDxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx \
-  -e SecretKey=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx \
-  -e InstanceID=lhins-xxxxxxxx \
-  -e Region=ap-guangzhou \
-  -e TYPE=server \
-  -e SSH_CLIENT="$SSH_CLIENT" \
-  -e Tag='#SSH' \
-  libli/ipsync:latest
+vi /usr/local/bin/run_ipsync.sh
+
 ```
+
+添加执行权限：`chmod +x /usr/local/bin/run_ipsync.sh`
 
 然后修改
 ```bash
 vi ~/.bashrc
-docker restart ipsync
+run_ipsync.sh
 ```
 
 即每次登录服务器都会运行一次docker来自动更新防火墙。
