@@ -40,78 +40,43 @@ http://myexternalip.com/raw
 
 给当前运行的机器一个标签，如在家使用就标记为`#home`，在公司使用就标记为`#company`。
 
+在服务器上运行的时候，Tag可以设置为`#SSH`。
+
+以下是服务端运行：
+
 ```bash
 docker run --name=ipsync -d --restart=unless-stopped \
   -e SecretID=AKIDxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx \
   -e SecretKey=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx \
   -e InstanceID=lhins-xxxxxxxx \
   -e Region=ap-guangzhou \
+  -e TYPE=server \
+  -e Tag='#SSH' \
+  libli/ipsync:latest
+```
+
+然后修改
+```bash
+vi ~/.bashrc
+docker restart ipsync
+```
+
+即每次登录服务器都会运行一次docker来自动更新防火墙。
+
+## 家里软路由使用
+
+```bash
+docker run --name=ipsync -d --restart=unless-stopped \
+  -e SecretID=AKIDxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx \
+  -e SecretKey=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx \
+  -e InstanceID=lhins-xxxxxxxx \
+  -e Region=ap-guangzhou \
+  -e TYPE=client \
   -e Tag='#home' \
   libli/ipsync:latest
 ```
 
-## ARM 软路由使用
-编译arm版本：
-`GOOS=linux GOARCH=arm64 go build`
-
-复制到软路由上`/usr/local/bin`
-
-编写自启动角本：
-vi /etc/init.d/FirewallIPSyncer
-
+配置crontab，每天凌晨3点运行一次：
 ```bash
-#!/bin/sh /etc/rc.common
-
-START=99
-STOP=15
-
-BIN=/usr/local/bin/FirewallIPSyncer
-
-start() {
-    if [ -x $BIN ]; then
-        echo "Sleeping 300 seconds before starting FirewallIPSyncer..."
-        sleep 300
-        echo "Starting FirewallIPSyncer..."
-        export SecretID=AKIDxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-        export SecretKey=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-        export Region=ap-guangzhou
-        export InstanceID=lhins-xxxxxxxx
-        export Tag='#Home'
-        $BIN >> /var/log/FirewallIPSyncer.log 2>&1 &
-    else
-        echo "FirewallIPSyncer binary not found..."
-    fi
-}
-
-stop() {
-    echo "Stopping FirewallIPSyncer..."
-    killall $(basename $BIN)
-}
-```
-
-添加权限：
-`chmod +x /etc/init.d/FirewallIPSyncer`
-
-启动：
-`/etc/init.d/FirewallIPSyncer start`
-
-## crontab 运行
-每天使用crontab运行一次，可以避免开启时要等待的问题。
-
-代码修改为执行完即退出。
-
-```bash
-$ vi ipsync.sh
-#!/bin/bash
-export SecretID=AKIDxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-export SecretKey=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-export Region=ap-guangzhou
-export InstanceID=lhins-xxxxxxxx
-export Tag='#Home'
-/usr/local/bin/FirewallIPSyncer
-```
-
-crontab -e
-```bash
-0 5 * * * /usr/local/bin/ipsync.sh >> /var/log/ipsync.log 2>&1
+0 3 * * * docker restart ipsync
 ```
