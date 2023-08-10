@@ -85,7 +85,7 @@ docker run --name=ipsync -d --restart=unless-stopped \
   libli/ipsync:latest
 ```
 
-配置crontab，每天凌晨3点运行一次：
+配置crontab，每天凌晨7点运行一次（一般运营商每天凌晨5点重置公网IP）：
 ```bash
-0 3 * * * docker restart ipsync
+0 7 * * * docker restart ipsync
 ```
