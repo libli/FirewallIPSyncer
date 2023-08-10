@@ -54,7 +54,7 @@ http://myexternalip.com/raw
 以下是服务端运行：
 
 ```bash
-docker run --name=ipsync -d --restart=unless-stopped \
+docker run --name=ipsync -d \
   -e SecretID=AKIDxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx \
   -e SecretKey=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx \
   -e InstanceID=lhins-xxxxxxxx \
