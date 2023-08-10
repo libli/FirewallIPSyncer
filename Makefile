@@ -20,7 +20,5 @@ build: login create-builder
 		-t $(DOCKER_REPO)/$(IMAGE_NAME):latest \
 		-t $(DOCKER_REPO)/$(IMAGE_NAME):$(VERSION) \
 		--progress=plain --push .
-build:
-	docker build --platform linux/amd64 -t $(DOCKER_REPO)/$(IMAGE_NAME):latest -t $(DOCKER_REPO)/$(IMAGE_NAME):$(VERSION) --progress=plain .
 clean:
 	-docker rmi $(docker images -q $(DOCKER_REPO)/$(IMAGE_NAME)) 2>/dev/null || true

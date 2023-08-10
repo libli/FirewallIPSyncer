@@ -60,6 +60,7 @@ docker run --name=ipsync -d --restart=unless-stopped \
   -e InstanceID=lhins-xxxxxxxx \
   -e Region=ap-guangzhou \
   -e TYPE=server \
+  -e SSH_CLIENT="$SSH_CLIENT" \
   -e Tag='#SSH' \
   libli/ipsync:latest
 ```

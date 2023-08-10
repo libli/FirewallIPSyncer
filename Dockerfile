@@ -19,6 +19,10 @@ RUN go build -ldflags="-w -s" -x -o /build/client
 
 # runner
 FROM debian:bullseye-slim
+
+# 安装ca-certificates
+RUN apt-get update && apt-get install -y ca-certificates && update-ca-certificates
+
 ENV TZ=Asia/Shanghai
 # 设置环境变量
 ENV TYPE="server"
